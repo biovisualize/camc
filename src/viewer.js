@@ -66,6 +66,23 @@ export class ShapeViewer {
     this.boxHelper.visible = true;
     this.scene.add(this.boxHelper);
 
+    // The F surface, drawn into the bottom-left corner of the same canvas with the scissor test.
+    // One GL context, and it lands where the F plot sat in the 2011 screenshot.
+    this._insetVisible = true;
+    this._insetRadius = 1;
+    this._insetCenter = new THREE.Vector3();
+    this.insetScene = new THREE.Scene();
+    this.insetCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 1000);
+    this.insetScene.add(new THREE.HemisphereLight(0xcbd9ee, 0x20242b, 1.05));
+    this.insetKeyLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    this.insetScene.add(this.insetKeyLight);
+    this.insetScene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    this.insetMesh = new THREE.Mesh(new THREE.BufferGeometry(), this.surfaceMaterial);
+    this.insetWire = new THREE.LineSegments(new THREE.BufferGeometry(), this.wireMaterial);
+    this.insetScene.add(this.insetMesh, this.insetWire);
+    this.insetBox = new THREE.Box3Helper(new THREE.Box3(), new THREE.Color(BOX));
+    this.insetScene.add(this.insetBox);
+
     this._radius = 1;
     this._framed = false; // until frame() has run once there is no orbit direction to preserve
     this._dirty = true;
@@ -114,8 +131,20 @@ export class ShapeViewer {
     this.controls.update();
   }
 
-  // Overridden in Task 5. Declared here so main.js can call it from the start.
-  setInset() {}
+  setInset(grid) {
+    this.insetMesh.geometry.dispose();
+    this.insetWire.geometry.dispose();
+    this.insetMesh.geometry = surfaceGeometry(grid);
+    this.insetWire.geometry = wireGeometry(grid);
+    const box = this.insetMesh.geometry.boundingBox ?? new THREE.Box3();
+    this.insetBox.box.copy(box);
+    if (!box.isEmpty()) {
+      const sphere = box.getBoundingSphere(new THREE.Sphere());
+      this._insetCenter.copy(sphere.center);
+      this._insetRadius = Math.max(sphere.radius, 1e-6);
+    }
+    this.invalidate();
+  }
 
   setOptions({ wireframe, box, inset } = {}) {
     if (wireframe !== undefined) this.wire.visible = wireframe;
@@ -184,10 +213,44 @@ export class ShapeViewer {
     this.keyLight.position.copy(this.camera.position);
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
+
     this.renderer.setScissorTest(false);
     this.renderer.setViewport(0, 0, w, h);
-    // autoClear is off so the inset can clear only its own corner, but scene.background is a
-    // Color, and three.js forces a full-frame clear for that at the start of render() regardless.
     this.renderer.render(this.scene, this.camera);
+
+    if (!this._insetVisible) return;
+
+    const size = Math.round(Math.min(w, h) * 0.28);
+    const pad = 16;
+    if (size < 40) return; // too small to read; skip rather than draw a smudge
+
+    // The inset shares the main camera's orientation, the way the original shared rotX/rotY, but
+    // keeps its own framing so zooming the main view does not shrink the preview.
+    const direction = new THREE.Vector3()
+      .subVectors(this.camera.position, this.controls.target)
+      .normalize();
+    this.insetCamera.position.copy(this._insetCenter).addScaledVector(direction, this._insetRadius * 6);
+    this.insetCamera.up.copy(this.camera.up);
+    this.insetCamera.lookAt(this._insetCenter);
+    const extent = this._insetRadius * 1.35;
+    this.insetCamera.left = -extent;
+    this.insetCamera.right = extent;
+    this.insetCamera.top = extent;
+    this.insetCamera.bottom = -extent;
+    this.insetCamera.near = 0.01 * this._insetRadius;
+    this.insetCamera.far = this._insetRadius * 24;
+    this.insetCamera.updateProjectionMatrix();
+    this.insetKeyLight.position.copy(this.insetCamera.position);
+
+    this.renderer.setScissorTest(true);
+    this.renderer.setViewport(pad, pad, size, size);
+    this.renderer.setScissor(pad, pad, size, size);
+    // Clear colour and depth inside the scissor rectangle only. Without the colour clear the main
+    // surface would show through the preview; without the depth clear the two would interleave.
+    // The main scene's background restores its own clear colour on the next frame.
+    this.renderer.setClearColor(INSET_BG, 1);
+    this.renderer.clear(true, true, false);
+    this.renderer.render(this.insetScene, this.insetCamera);
+    this.renderer.setScissorTest(false);
   }
 }

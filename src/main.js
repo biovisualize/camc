@@ -1,5 +1,5 @@
 // Entry point. The control panel arrives in Task 7; this renders the default shape.
-import { hSurface } from "./camc.js";
+import { fSurface, hSurface } from "./camc.js";
 import { ShapeViewer } from "./viewer.js";
 
 const state = {
@@ -14,4 +14,5 @@ const state = {
 
 const viewer = new ShapeViewer(document.getElementById("view"));
 viewer.setSurface(hSurface(state.a, state.b, state));
+viewer.setInset(fSurface(state.a, state.b, 24, 36));
 viewer.frame();
