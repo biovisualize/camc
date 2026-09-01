@@ -87,4 +87,10 @@ relative paths, so it works unchanged under the `/camc/` path prefix.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — see [`LICENSE`](LICENSE). That covers the code in `src/`, `test/`, `index.html` and
+`serve.py`, all of which is original: the mathematics comes from the papers cited above rather than
+from anyone's implementation.
+
+The two files in [`vendor/`](vendor/README.md) are three.js r160, copied in rather than installed so
+the project needs no build step. They are MIT too, but they are not mine — see
+[`vendor/README.md`](vendor/README.md).
