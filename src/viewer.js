@@ -159,7 +159,9 @@ export class ShapeViewer {
   }
 
   setOptions({ wireframe, box, inset, transparent } = {}) {
-    if (wireframe !== undefined) this.wire.visible = wireframe;
+    // The inset draws its own wireframe from its own geometry, so it needs toggling too — sharing
+    // the material is not enough, visibility is per object.
+    if (wireframe !== undefined) this.wire.visible = this.insetWire.visible = wireframe;
     if (box !== undefined) this.boxHelper.visible = box;
     if (inset !== undefined) this._insetVisible = inset;
     if (transparent !== undefined) this._setTransparent(transparent);

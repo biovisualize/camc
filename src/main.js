@@ -21,7 +21,7 @@ function apply(state, refit) {
 
   const grid = hSurface(state.a, state.b, state);
   viewer.setSurface(grid);
-  viewer.setInset(fSurface(state.a, state.b, 24, 36));
+  viewer.setInset(fSurface(state.a, state.b, state.rows, state.cols));
   viewer.setOptions(state);
   if (refit) viewer.frame();
 
