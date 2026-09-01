@@ -67,6 +67,7 @@ export class ShapeViewer {
     this.scene.add(this.boxHelper);
 
     this._radius = 1;
+    this._framed = false; // until frame() has run once there is no orbit direction to preserve
     this._dirty = true;
     this._onResize = () => this._resize();
     window.addEventListener("resize", this._onResize);
@@ -80,8 +81,37 @@ export class ShapeViewer {
     this.wire.geometry.dispose();
     this.mesh.geometry = surfaceGeometry(grid);
     this.wire.geometry = wireGeometry(grid);
-    this.boxHelper.box.copy(this.mesh.geometry.boundingBox ?? new THREE.Box3());
+    const box = this.mesh.geometry.boundingBox ?? new THREE.Box3();
+    this.boxHelper.box.copy(box);
+    if (this._framed && !box.isEmpty()) this._rescale(box);
     this.invalidate();
+  }
+
+  // Keep a shape in frame when its size changes a lot, without disturbing the angle the user
+  // orbited to or the zoom they chose. A small parameter tweak leaves the camera completely
+  // alone: re-framing on every slider tick makes the shape appear to jump away from the hand
+  // moving it. Without this, though, a large change in scale can leave the geometry outside the
+  // frustum entirely, with no way back except the Fit view button.
+  _rescale(box) {
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const radius = Math.max(sphere.radius, 1e-6);
+    const ratio = radius / this._radius;
+    if (ratio < 1.5 && ratio > 1 / 1.5) return;
+
+    // Under an orthographic projection, sliding the camera along its own view direction changes
+    // nothing on screen, so near/far can be re-derived with no visible jump. Only the frustum
+    // extent alters apparent size, and reaching this line means the scale genuinely changed.
+    // camera.zoom is left untouched, so the user's own zoom survives.
+    const direction = new THREE.Vector3()
+      .subVectors(this.camera.position, this.controls.target)
+      .normalize();
+    this._radius = radius;
+    this.controls.target.copy(sphere.center);
+    this.camera.position.copy(sphere.center).addScaledVector(direction, radius * 6);
+    this.camera.near = 0.01 * radius;
+    this.camera.far = radius * 24;
+    this._applyFrustum();
+    this.controls.update();
   }
 
   // Overridden in Task 5. Declared here so main.js can call it from the start.
@@ -94,13 +124,15 @@ export class ShapeViewer {
     this.invalidate();
   }
 
-  // Refit the camera to the current surface. Called on load, on presets and on reset — not on
-  // every slider tick, because re-framing mid-drag makes the shape appear to jump.
+  // Refit the camera fully: recentre, reset the zoom, and return to the default viewing angle.
+  // Called on load, on presets and on Fit view. Parameter changes do NOT come here — they go
+  // through the gentler _rescale() above, which preserves the user's angle and zoom.
   frame() {
     const box = this.mesh.geometry.boundingBox;
     if (!box || box.isEmpty()) return;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     this._radius = Math.max(sphere.radius, 1e-6);
+    this._framed = true;
 
     this.controls.target.copy(sphere.center);
     const direction = new THREE.Vector3(0.55, 0.35, 1).normalize();
