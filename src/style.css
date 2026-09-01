@@ -58,3 +58,22 @@ html, body {
   #app { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; }
   #panel { border-left: none; border-top: 1px solid var(--line); }
 }
+
+.group { margin: 0 0 20px; }
+
+.group h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.profile {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: #0d1117;
+}
