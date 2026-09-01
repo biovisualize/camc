@@ -42,8 +42,10 @@ IPv6 (`::1`), the connection will be refused — use `http://127.0.0.1:8777` dir
 node --test
 ```
 
-Node's built-in runner, no framework and nothing to install. The tests cover the two modules that
-import nothing — the mathematics in `src/camc.js` and the grid topology in `src/topology.js`. The
+Node's built-in runner, no framework and nothing to install. The tests cover what can run without a
+browser: the mathematics in `src/camc.js`, the grid topology in `src/topology.js`, and the preset
+table in `src/controls.js` — plain data that nothing else guards, checked against the slider bounds
+declared in `index.html` so a preset cannot be added that the panel would silently clamp. The
 rendering needs a GPU and is checked by eye.
 
 ## History
