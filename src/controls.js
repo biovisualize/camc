@@ -29,7 +29,9 @@ function presetState(preset) {
     cols: preset.cols ?? 60,
     sMin: preset.sMin,
     sMax: preset.sMax,
-    revolution: TAU,
+    // A p/q profile needs q rotations before it closes on itself, so a preset can ask for more
+    // than one turn. Omitting `turns` keeps the single turn every other preset assumes.
+    revolution: preset.turns ? preset.turns * TAU : TAU,
     wireframe: true,
     box: true,
     inset: true,
