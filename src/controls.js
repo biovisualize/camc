@@ -8,10 +8,10 @@ const S_GAP = 0.01;
 // (CAMC_5avril11/src/Main.java and prog/python/camc4.py). Those comments are the only surviving
 // record of which parameters were actually interesting.
 export const PRESETS = [
-  { name: "Screenshot (2011)", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [3, 40, 7, 40], b: [3.5, 13, 11, 19], rows: 18, cols: 30 },
-  { name: "Self-intersecting", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [4, 40, 40, 40], b: [2, 2, 2, 2] },
   { name: "Rounded", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [6, 10, 4, 4], b: [4, 4, 4, 4] },
   { name: "Rounded, soft", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [6, 10, 4, 4], b: [3, 3.2, 4, 4] },
+  { name: "Self-intersecting", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [4, 40, 40, 40], b: [2, 2, 2, 2] },
+  { name: "Asymmetrical", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [3, 40, 7, 40], b: [3.5, 13, 11, 19], rows: 18, cols: 30 },
   { name: "Twisted", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [3, 3.2, 4, 4], b: [3, 3.2, 4, 4] },
   { name: "Elongated", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [5, 6, 4, 4], b: [5, 10, 4, 4] },
   { name: "Star", sMin: Math.PI / 8, sMax: (8 / 9) * Math.PI, a: [3, 10 / 9, 10 / 9, 10 / 9], b: [3, 10 / 9, 10 / 9, 10 / 9] },
@@ -118,13 +118,15 @@ export function createControls({ onChange, onFrame }) {
     const hi = $("smax");
     if (moved === "smax") {
       const floor = Number(lo.value) + S_GAP;
-      if (Number(hi.value) < floor) hi.value = String(floor);
-    } else {
+      if (Number(hi.value) >= floor) return;
+      hi.value = String(floor);
+      $("smax-num").value = hi.value;
+    } else if (moved === "smin") {
       const ceiling = Number(hi.value) - S_GAP;
-      if (Number(lo.value) > ceiling) lo.value = String(ceiling);
+      if (Number(lo.value) <= ceiling) return;
+      lo.value = String(ceiling);
+      $("smin-num").value = lo.value;
     }
-    $("smin-num").value = $("smin").value;
-    $("smax-num").value = $("smax").value;
   }
 
   function handleInput(moved) {
@@ -169,20 +171,38 @@ const URL_KEYS = {
   bm: ["b", "m"], bn1: ["b", "n1"], bn2: ["b", "n2"], bn3: ["b", "n3"],
 };
 
+// The sliders in index.html carry the authoritative bounds for every parameter, so read them from
+// the DOM rather than restating them here and letting the two drift apart.
+function clampToInput(id, value) {
+  const input = $(id);
+  return Math.min(Math.max(value, Number(input.min)), Number(input.max));
+}
+
 export function readUrl(fallback) {
   const params = new URLSearchParams(location.search);
   const state = structuredClone(fallback);
   for (const [key, [group, field]] of Object.entries(URL_KEYS)) {
     const value = Number(params.get(key));
-    if (params.has(key) && Number.isFinite(value)) state[group][field] = value;
+    if (params.has(key) && Number.isFinite(value)) {
+      state[group][field] = clampToInput(`${group}-${field}`, value);
+    }
   }
-  for (const [key, field] of [["rows", "rows"], ["cols", "cols"], ["smin", "sMin"], ["smax", "sMax"], ["rev", "revolution"]]) {
+  for (const [key, field, id] of [
+    ["rows", "rows", "rows"],
+    ["cols", "cols", "cols"],
+    ["smin", "sMin", "smin"],
+    ["smax", "sMax", "smax"],
+    ["rev", "revolution", "revolution"],
+  ]) {
     const value = Number(params.get(key));
-    if (params.has(key) && Number.isFinite(value)) state[field] = value;
+    if (params.has(key) && Number.isFinite(value)) state[field] = clampToInput(id, value);
   }
-  // A hand-edited or stale URL can arrive with the interval inverted or collapsed. Repairing it
-  // here rather than letting validate() reject it means the page still draws something: a blank
-  // canvas with an error message and no way back except Reset is a poor way to greet a visitor.
+
+  // A hand-edited or stale URL can arrive with the interval inverted or collapsed — and clamping
+  // each value into its slider's range can collapse it too, since ?smin=-500&smax=-400 both land
+  // on the minimum. Repairing it here rather than letting validate() reject it means the page
+  // still draws something: a blank canvas with an error message and no way back except Reset is a
+  // poor way to greet a visitor.
   if (state.sMin > state.sMax) {
     const swap = state.sMin;
     state.sMin = state.sMax;

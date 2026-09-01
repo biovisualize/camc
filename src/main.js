@@ -50,13 +50,18 @@ function schedule(state) {
     scheduled = 0;
     const next = pending;
     pending = null;
-    apply(next, false);
+    if (next) apply(next, false);
   });
 }
 
 const controls = createControls({
   onChange: schedule,
-  onFrame: (state) => apply(state, true),
+  onFrame: (state) => {
+    // Drop any change still waiting on a frame: it carries an older state, and applying it after
+    // the refit would put the previous shape back on screen while the panel shows the new one.
+    pending = null;
+    apply(state, true);
+  },
 });
 
 const initial = readUrl(DEFAULT_STATE);
