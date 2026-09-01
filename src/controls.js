@@ -35,7 +35,7 @@ function presetState(preset) {
     wireframe: true,
     box: true,
     inset: true,
-    transparent: true,
+    transparent: false,
   };
 }
 
