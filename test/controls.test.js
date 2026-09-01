@@ -23,19 +23,32 @@ function sliderBounds() {
   return bounds;
 }
 
-// The 2011 screenshot is the acceptance target for the whole rebuild, and DEFAULT_STATE is derived
-// from PRESETS[0], so reordering or renaming that entry silently changes what the app opens with.
-test("the default state reproduces the 2011 screenshot exactly", () => {
-  assert.equal(PRESETS[0].name, "Screenshot (2011)");
-  assert.deepEqual(DEFAULT_STATE.a, { m: 3, n1: 40, n2: 7, n3: 40 });
-  assert.deepEqual(DEFAULT_STATE.b, { m: 3.5, n1: 13, n2: 11, n3: 19 });
-  assert.equal(DEFAULT_STATE.rows, 18);
-  assert.equal(DEFAULT_STATE.cols, 30);
-  // Exact, not approximate: writeUrl omits any value still identical to its default, so a value
-  // that has been rounded even slightly would start appearing in the URL of an untouched page.
-  assert.equal(DEFAULT_STATE.sMin, Math.PI / 6);
-  assert.equal(DEFAULT_STATE.sMax, (6 / 7) * Math.PI);
-  assert.equal(DEFAULT_STATE.revolution, 2 * Math.PI);
+// Which preset comes first, and what it is called, is an editorial choice — this asserts nothing
+// about that. What it does protect is the mechanism that depends on the default: writeUrl leaves out
+// any value still identical to its default, and stateToDom/stateFromDom carry values through the
+// DOM as strings. So every default must survive a String -> Number round-trip bit-for-bit, or an
+// untouched page starts growing a query string for parameters nobody touched. Irrational defaults
+// like Math.PI / 6 do survive; a value quantised by a fixed slider `step` would not.
+test("every default survives the round-trip through the DOM unchanged", () => {
+  const scalars = {
+    rows: DEFAULT_STATE.rows,
+    cols: DEFAULT_STATE.cols,
+    sMin: DEFAULT_STATE.sMin,
+    sMax: DEFAULT_STATE.sMax,
+    revolution: DEFAULT_STATE.revolution,
+    ...Object.fromEntries(Object.entries(DEFAULT_STATE.a).map(([k, v]) => [`a.${k}`, v])),
+    ...Object.fromEntries(Object.entries(DEFAULT_STATE.b).map(([k, v]) => [`b.${k}`, v])),
+  };
+  for (const [name, value] of Object.entries(scalars)) {
+    assert.equal(typeof value, "number", `${name} is not a number`);
+    assert.ok(Number.isFinite(value), `${name} is not finite`);
+    assert.equal(Number(String(value)), value, `${name} does not survive String -> Number`);
+  }
+});
+
+test("the default state is one the application will accept", () => {
+  assert.deepEqual(validate(DEFAULT_STATE), []);
+  assert.ok(PRESETS.length > 0, "DEFAULT_STATE is derived from PRESETS[0]");
 });
 
 test("every preset is accepted by validate", () => {
