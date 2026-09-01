@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAMC — constant anisotropic mean curvature surfaces</title>
+  <link rel="stylesheet" href="src/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.js",
+        "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="app">
+    <div id="canvas-wrap">
+      <canvas id="view" aria-label="Constant anisotropic mean curvature surface"></canvas>
+      <p id="status" role="status" hidden></p>
+    </div>
+    <aside id="panel"></aside>
+  </main>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
