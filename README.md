@@ -29,37 +29,9 @@ Static site, no build:
 python3 serve.py 8777    # open http://127.0.0.1:8777
 ```
 
-`serve.py` is `http.server` plus `Cache-Control: no-store`. Plain `python -m http.server` sends no
-cache directives, so browsers reuse cached ES modules without revalidating and edits to `src/*.js`
-appear to do nothing.
-
-Note: `serve.py` binds to `127.0.0.1` (IPv4). On systems where the browser resolves `localhost` to
-IPv6 (`::1`), the connection will be refused — use `http://127.0.0.1:8777` directly.
-
-## Tests
-
 ```bash
 node --test
 ```
-
-Node's built-in runner, no framework and nothing to install. The tests cover what can run without a
-browser: the mathematics in `src/camc.js`, the grid topology in `src/topology.js`, and the preset
-table in `src/controls.js` — plain data that nothing else guards, checked against the slider bounds
-declared in `index.html` so a preset cannot be added that the panel would silently clamp. The
-rendering needs a GPU and is checked by eye.
-
-## History
-
-This is a rebuild of a Processing 1.x sketch written in 2011, which used ControlP5 for its widgets,
-the Flanagan library for quadrature, and JOGL for display. The original source, the matplotlib
-prototypes that preceded it, and the screenshot this version was checked against are kept in
-`../camc-archive/`.
-
-Two things changed in the port. The height integral depends only on `s`, so it is now computed once
-per row instead of once per vertex — at maximum resolution that is 200 integrations rather than
-40,000, which is why the original needed a background thread and this does not. And the seam is
-closed only when the sweep is a whole number of turns; the original stitched the last column back
-to the first unconditionally, welding a spurious sheet across any partial sweep.
 
 ## Background
 
@@ -73,17 +45,7 @@ Wulff-shape treatment of anisotropic surface energies and Gielis' superformula:
 - Koiso M, Palmer B (2008). *Rolling construction for anisotropic Delaunay surfaces.* Pacific
   Journal of Mathematics 234(2), 345–378.
 
-## Publishing
-
-There is no remote yet. To put it online, from this directory:
-
-```bash
-gh repo create biovisualize/camc --public --source=. --remote=origin --push
-gh api -X POST repos/biovisualize/camc/pages -f 'source[branch]=main' -f 'source[path]=/'
-```
-
-Nothing needs building, so Pages can serve the branch root as it stands. The import map uses
-relative paths, so it works unchanged under the `/camc/` path prefix.
+This is a rebuild of a Processing 1.x sketch written in 2011.
 
 ## License
 

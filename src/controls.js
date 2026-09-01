@@ -8,10 +8,11 @@ const S_GAP = 0.01;
 // (CAMC_5avril11/src/Main.java and prog/python/camc4.py). Those comments are the only surviving
 // record of which parameters were actually interesting.
 export const PRESETS = [
-  { name: "Screenshot (2011)", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [3, 40, 7, 40], b: [3.5, 13, 11, 19], rows: 18, cols: 30 },
-  { name: "Self-intersecting", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [4, 40, 40, 40], b: [2, 2, 2, 2] },
+  { name: "7/2 — seven angles in two rotations", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [3, 40, 7, 40], b: [3.5, 13, 11, 19], rows: 18, cols: 30, turns: 2 },
+  { name: "5/2 — five angles in two rotations", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [3, 40, 7, 40], b: [2.5, 13, 11, 19], rows: 18, cols: 30, turns: 2 },
   { name: "Rounded", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [6, 10, 4, 4], b: [4, 4, 4, 4] },
   { name: "Rounded, soft", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [6, 10, 4, 4], b: [3, 3.2, 4, 4] },
+  { name: "Faceted", sMin: Math.PI / 6, sMax: (6 / 7) * Math.PI, a: [4, 40, 40, 40], b: [2, 2, 2, 2] },
   { name: "Twisted", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [3, 3.2, 4, 4], b: [3, 3.2, 4, 4] },
   { name: "Elongated", sMin: Math.PI / 6, sMax: (3 * Math.PI) / 4, a: [5, 6, 4, 4], b: [5, 10, 4, 4] },
   { name: "Star", sMin: Math.PI / 8, sMax: (8 / 9) * Math.PI, a: [3, 10 / 9, 10 / 9, 10 / 9], b: [3, 10 / 9, 10 / 9, 10 / 9] },
