@@ -1,6 +1,6 @@
-// Entry point. Rendering arrives in Task 4; for now this reports what the geometry builder makes.
+// Entry point. The control panel arrives in Task 7; this renders the default shape.
 import { hSurface } from "./camc.js";
-import { surfaceGeometry, wireGeometry } from "./geometry.js";
+import { ShapeViewer } from "./viewer.js";
 
 const state = {
   a: { m: 3, n1: 40, n2: 7, n3: 40 },
@@ -12,10 +12,6 @@ const state = {
   revolution: 2 * Math.PI,
 };
 
-const grid = hSurface(state.a, state.b, state);
-const surface = surfaceGeometry(grid);
-const wire = wireGeometry(grid);
-
-console.log("vertices", grid.rows * grid.cols, "nonFinite", grid.nonFinite, "closed", grid.closed);
-console.log("triangles", surface.getIndex().count / 3);
-console.log("wire segments", wire.getAttribute("position").count / 2);
+const viewer = new ShapeViewer(document.getElementById("view"));
+viewer.setSurface(hSurface(state.a, state.b, state));
+viewer.frame();
