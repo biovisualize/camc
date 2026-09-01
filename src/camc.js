@@ -107,12 +107,24 @@ function emptyGrid(rows, cols, closed) {
 }
 
 function writeVertex(grid, index, x, y, z) {
-  const ok = Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z);
-  grid.position[index * 3] = ok ? x : 0;
-  grid.position[index * 3 + 1] = ok ? y : 0;
-  grid.position[index * 3 + 2] = ok ? z : 0;
+  // Test what actually landed in the Float32Array rather than the double we were handed: 1e40 is a
+  // perfectly finite double that narrows to Infinity on the way in, and flagging that as a good
+  // vertex sends Infinity to the GPU and takes the camera's bounding sphere to NaN with it.
+  const base = index * 3;
+  grid.position[base] = x;
+  grid.position[base + 1] = y;
+  grid.position[base + 2] = z;
+  const ok =
+    Number.isFinite(grid.position[base]) &&
+    Number.isFinite(grid.position[base + 1]) &&
+    Number.isFinite(grid.position[base + 2]);
+  if (!ok) {
+    grid.position[base] = 0;
+    grid.position[base + 1] = 0;
+    grid.position[base + 2] = 0;
+    grid.nonFinite++;
+  }
   grid.finite[index] = ok ? 1 : 0;
-  if (!ok) grid.nonFinite++;
 }
 
 // The product surface: (y_A(s) x_B(t), y_A(s) y_B(t), x_A(s)) over s in [0, pi], t in [0, 2pi].

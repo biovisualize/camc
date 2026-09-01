@@ -111,7 +111,9 @@ export class ShapeViewer {
   // frustum entirely, with no way back except the Fit view button.
   _rescale(box) {
     const sphere = box.getBoundingSphere(new THREE.Sphere());
-    const radius = Math.max(sphere.radius, 1e-6);
+    // A non-finite radius would propagate into position, near and far and blank the canvas with no
+    // way back, so refuse it outright rather than framing nothing.
+    const radius = Number.isFinite(sphere.radius) ? Math.max(sphere.radius, 1e-6) : 1;
     const ratio = radius / this._radius;
     if (ratio < 1.5 && ratio > 1 / 1.5) return;
 
@@ -160,7 +162,9 @@ export class ShapeViewer {
     const box = this.mesh.geometry.boundingBox;
     if (!box || box.isEmpty()) return;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
-    this._radius = Math.max(sphere.radius, 1e-6);
+    // A non-finite radius would propagate into position, near and far and blank the canvas with no
+    // way back, so refuse it outright rather than framing nothing.
+    this._radius = Number.isFinite(sphere.radius) ? Math.max(sphere.radius, 1e-6) : 1;
     this._framed = true;
 
     this.controls.target.copy(sphere.center);
