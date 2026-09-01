@@ -22,12 +22,57 @@
     </div>
     <aside id="panel">
       <section class="group">
+        <h2>Preset</h2>
+        <select id="preset" aria-label="Parameter preset"></select>
+        <div class="buttons">
+          <button id="frame" type="button">Fit view</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="group">
         <h2>Profile A</h2>
         <canvas id="profile-a" class="profile" aria-label="Profile A curve"></canvas>
+        <div class="field"><label for="a-m">m</label><input id="a-m" type="range" min="0" max="50" step="any" /><input id="a-m-num" type="number" step="any" /></div>
+        <div class="field"><label for="a-n1">n1</label><input id="a-n1" type="range" min="0.01" max="50" step="any" /><input id="a-n1-num" type="number" step="any" min="0.01" /></div>
+        <div class="field"><label for="a-n2">n2</label><input id="a-n2" type="range" min="0" max="50" step="any" /><input id="a-n2-num" type="number" step="any" /></div>
+        <div class="field"><label for="a-n3">n3</label><input id="a-n3" type="range" min="0" max="50" step="any" /><input id="a-n3-num" type="number" step="any" /></div>
       </section>
+
       <section class="group">
         <h2>Profile B</h2>
         <canvas id="profile-b" class="profile" aria-label="Profile B curve"></canvas>
+        <div class="field"><label for="b-m">m</label><input id="b-m" type="range" min="0" max="50" step="any" /><input id="b-m-num" type="number" step="any" /></div>
+        <div class="field"><label for="b-n1">n1</label><input id="b-n1" type="range" min="0.01" max="50" step="any" /><input id="b-n1-num" type="number" step="any" min="0.01" /></div>
+        <div class="field"><label for="b-n2">n2</label><input id="b-n2" type="range" min="0" max="50" step="any" /><input id="b-n2-num" type="number" step="any" /></div>
+        <div class="field"><label for="b-n3">n3</label><input id="b-n3" type="range" min="0" max="50" step="any" /><input id="b-n3-num" type="number" step="any" /></div>
+      </section>
+
+      <section class="group">
+        <h2>Sweep</h2>
+        <div class="field"><label for="revolution">turns</label><input id="revolution" type="range" min="0.05" max="18.849" step="any" /><input id="revolution-num" type="number" step="any" /></div>
+        <div class="field"><label for="smin">s from</label><input id="smin" type="range" min="0.01" max="3.13" step="any" /><input id="smin-num" type="number" step="any" /></div>
+        <div class="field"><label for="smax">s to</label><input id="smax" type="range" min="0.01" max="3.13" step="any" /><input id="smax-num" type="number" step="any" /></div>
+      </section>
+
+      <section class="group">
+        <h2>Resolution</h2>
+        <div class="field"><label for="rows">rows</label><input id="rows" type="range" min="3" max="200" step="1" /><input id="rows-num" type="number" step="1" min="3" /></div>
+        <div class="field"><label for="cols">cols</label><input id="cols" type="range" min="3" max="200" step="1" /><input id="cols-num" type="number" step="1" min="3" /></div>
+      </section>
+
+      <section class="group">
+        <h2>Display</h2>
+        <label class="check"><input id="opt-wire" type="checkbox" checked /> Wireframe</label>
+        <label class="check"><input id="opt-box" type="checkbox" checked /> Bounding box</label>
+        <label class="check"><input id="opt-inset" type="checkbox" checked /> F-surface inset</label>
+      </section>
+
+      <section class="group" id="about">
+        <h2>About</h2>
+        <p>Constant anisotropic mean curvature surfaces, generated from two Gielis superformula
+          profiles. A browser rebuild of a 2011 Processing sketch.</p>
+        <p><a href="https://github.com/biovisualize/camc" target="_blank" rel="noopener">biovisualize/camc</a></p>
       </section>
     </aside>
   </main>
