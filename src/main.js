@@ -36,8 +36,26 @@ function apply(state, refit) {
   writeUrl(state);
 }
 
+// A slider drag fires input events faster than the screen refreshes, and every apply() rebuilds
+// four BufferGeometry objects — at a 200 x 200 grid that is far more work than a single frame can
+// absorb. Coalescing to one rebuild per frame keeps a drag responsive at any grid size. Button
+// clicks are rare and go straight through, so a refit is never delayed or dropped.
+let pending = null;
+let scheduled = 0;
+
+function schedule(state) {
+  pending = state;
+  if (scheduled) return;
+  scheduled = requestAnimationFrame(() => {
+    scheduled = 0;
+    const next = pending;
+    pending = null;
+    apply(next, false);
+  });
+}
+
 const controls = createControls({
-  onChange: (state) => apply(state, false),
+  onChange: schedule,
   onFrame: (state) => apply(state, true),
 });
 

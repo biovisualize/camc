@@ -1,6 +1,8 @@
 // The DOM panel: reads and writes the sliders, holds the presets, and mirrors state in the URL.
 
 const TAU = 2 * Math.PI;
+// The smallest interval s is allowed to span. Letting s from and s to meet collapses the surface.
+const S_GAP = 0.01;
 
 // Parameter sets worth looking at, recovered from the commented-out calls in the archive
 // (CAMC_5avril11/src/Main.java and prog/python/camc4.py). Those comments are the only surviving
@@ -95,37 +97,38 @@ export function createControls({ onChange, onFrame }) {
     number.max = range.max;
     range.addEventListener("input", () => {
       number.value = range.value;
-      handleInput();
+      handleInput(id);
     });
     number.addEventListener("input", () => {
       if (number.value === "") return;
       range.value = number.value;
-      handleInput();
+      handleInput(id);
     });
   }
 
   for (const id of ["opt-wire", "opt-box", "opt-inset"]) {
-    $(id).addEventListener("change", handleInput);
+    $(id).addEventListener("change", () => handleInput());
   }
 
-  // s from and s to share one interval, so each pushes the other rather than crossing it.
-  function clampRange() {
-    const step = 0.01;
-    let lo = Number($("smin").value);
-    let hi = Number($("smax").value);
-    if (lo >= hi) {
-      if (document.activeElement === $("smin") || document.activeElement === $("smin-num")) {
-        hi = Math.min(Number($("smax").max), lo + step);
-      } else {
-        lo = Math.max(Number($("smin").min), hi - step);
-      }
-      $("smin").value = $("smin-num").value = String(lo);
-      $("smax").value = $("smax-num").value = String(hi);
+  // s from and s to share one interval. Whichever slider the user moved is the one that gets
+  // clamped against the other: pushing the neighbour along instead would silently move a value
+  // the user set by hand, and collapses the pair onto a single value at the ends of the range.
+  function clampRange(moved) {
+    const lo = $("smin");
+    const hi = $("smax");
+    if (moved === "smax") {
+      const floor = Number(lo.value) + S_GAP;
+      if (Number(hi.value) < floor) hi.value = String(floor);
+    } else {
+      const ceiling = Number(hi.value) - S_GAP;
+      if (Number(lo.value) > ceiling) lo.value = String(ceiling);
     }
+    $("smin-num").value = $("smin").value;
+    $("smax-num").value = $("smax").value;
   }
 
-  function handleInput() {
-    clampRange();
+  function handleInput(moved) {
+    clampRange(moved);
     onChange(stateFromDom());
   }
 
@@ -177,19 +180,50 @@ export function readUrl(fallback) {
     const value = Number(params.get(key));
     if (params.has(key) && Number.isFinite(value)) state[field] = value;
   }
+  // A hand-edited or stale URL can arrive with the interval inverted or collapsed. Repairing it
+  // here rather than letting validate() reject it means the page still draws something: a blank
+  // canvas with an error message and no way back except Reset is a poor way to greet a visitor.
+  if (state.sMin > state.sMax) {
+    const swap = state.sMin;
+    state.sMin = state.sMax;
+    state.sMax = swap;
+  }
+  if (!(state.sMax - state.sMin >= S_GAP)) {
+    state.sMin = fallback.sMin;
+    state.sMax = fallback.sMax;
+  }
   return state;
 }
 
+let urlTimer = 0;
+
 export function writeUrl(state) {
-  const round = (v) => String(Math.round(v * 1e4) / 1e4);
+  // Safari throws a SecurityError past roughly a hundred history calls in thirty seconds, and a
+  // single slider drag would sail well past that, so let the drag settle before writing.
+  clearTimeout(urlTimer);
+  urlTimer = setTimeout(() => writeUrlNow(state), 250);
+}
+
+function writeUrlNow(state) {
+  const round = (v) => Math.round(v * 1e4) / 1e4;
   const params = new URLSearchParams();
+
+  // Anything still at its default is left out, so an untouched page keeps a clean URL and the
+  // irrational defaults come back from a reload exactly rather than rounded to four decimals.
+  // The trade is that changing a default would shift the meaning of an old link.
+  const put = (key, value, fallback) => {
+    if (value !== fallback) params.set(key, String(round(value)));
+  };
+
   for (const [key, [group, field]] of Object.entries(URL_KEYS)) {
-    params.set(key, round(state[group][field]));
+    put(key, state[group][field], DEFAULT_STATE[group][field]);
   }
-  params.set("rows", String(state.rows));
-  params.set("cols", String(state.cols));
-  params.set("smin", round(state.sMin));
-  params.set("smax", round(state.sMax));
-  params.set("rev", round(state.revolution));
-  history.replaceState(null, "", "?" + params.toString());
+  put("rows", state.rows, DEFAULT_STATE.rows);
+  put("cols", state.cols, DEFAULT_STATE.cols);
+  put("smin", state.sMin, DEFAULT_STATE.sMin);
+  put("smax", state.sMax, DEFAULT_STATE.sMax);
+  put("rev", state.revolution, DEFAULT_STATE.revolution);
+
+  const query = params.toString();
+  history.replaceState(null, "", query === "" ? location.pathname : "?" + query);
 }
