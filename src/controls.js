@@ -143,7 +143,9 @@ export function createControls({ onChange, onFrame }) {
     next.box = $("opt-box").checked;
     next.inset = $("opt-inset").checked;
     stateToDom(next);
-    onFrame(next);
+    // Read back through the DOM rather than passing `next` straight on, so a preset goes through
+    // the same clamping every other change does and cannot smuggle an out-of-range value past it.
+    onFrame(stateFromDom());
   });
 
   $("frame").addEventListener("click", () => onFrame(stateFromDom()));

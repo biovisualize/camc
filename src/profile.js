@@ -1,6 +1,9 @@
 // The 2D superformula profile, drawn to a plain 2D canvas. This is a rectangle, two axes and a
 // polyline, so it needs no WebGL.
 
+// Without a build step the palette cannot be shared with the stylesheet, so these mirror
+// src/style.css, which is the source of truth. AXIS sits between --line and --muted and has no
+// counterpart there; it exists only to keep the axes from competing with the curve.
 const BORDER = "#262e39";
 const AXIS = "#2f3a47";
 const CURVE = "#e4ecf5";

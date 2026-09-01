@@ -12,7 +12,7 @@ const BACKGROUND = 0x11151c;
 const SURFACE = 0x7f9fc4;
 const WIRE = 0xe4ecf5;
 const BOX = 0x3a4653;
-const INSET_BG = 0x0d1117; // used by the inset in Task 5; matches the profile canvases
+const INSET_BG = 0x0d1117; // the inset's own background; matches the profile canvases
 
 export class ShapeViewer {
   constructor(canvas) {
@@ -20,7 +20,9 @@ export class ShapeViewer {
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    // The inset in Task 5 draws a second scene into a corner, so clearing is done by hand.
+    // The inset draws a second scene into a corner and must clear only that corner, so clearing is
+    // done by hand. The main scene is unaffected: scene.background is a Color, and three.js forces
+    // a full-frame clear for a Color background at the start of every render regardless of this.
     this.renderer.autoClear = false;
 
     this.scene = new THREE.Scene();
@@ -143,7 +145,8 @@ export class ShapeViewer {
     if (!box.isEmpty()) {
       const sphere = box.getBoundingSphere(new THREE.Sphere());
       this._insetCenter.copy(sphere.center);
-      this._insetRadius = Math.max(sphere.radius, 1e-6);
+      // Same guard as frame() and _rescale(): a non-finite radius would blank the preview.
+      this._insetRadius = Number.isFinite(sphere.radius) ? Math.max(sphere.radius, 1e-6) : 1;
     }
     this.invalidate();
   }
@@ -194,6 +197,9 @@ export class ShapeViewer {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     if (w === 0 || h === 0) return;
+    // Re-read the ratio rather than trusting the one from construction: dragging the window to a
+    // display with a different density changes it, and the canvas would stay soft until a reload.
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(w, h, false);
     this._applyFrustum();
     this.invalidate();
@@ -220,6 +226,8 @@ export class ShapeViewer {
 
     this.renderer.setScissorTest(false);
     this.renderer.setViewport(0, 0, w, h);
+    // No explicit clear: autoClear is off, but the Color background forces one anyway, and this
+    // full-frame pass is also what restores the clear colour the inset leaves behind below.
     this.renderer.render(this.scene, this.camera);
 
     if (!this._insetVisible) return;

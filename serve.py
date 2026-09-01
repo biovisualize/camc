@@ -7,7 +7,7 @@ shows up as edits to ``src/*.js`` having no effect — or worse, a half-updated 
 is new and another is stale (e.g. "viewer.captureImage is not a function").
 
 Usage:
-    python serve.py [port]        # default 8777, then open http://localhost:<port>
+    python serve.py [port]        # default 8777, then open http://127.0.0.1:<port>
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ def main() -> None:
     root = Path(__file__).parent
     handler = partial(NoCacheHandler, directory=str(root))
     with ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:
-        print(f"Serving {root} at http://localhost:{port}  (no-store; Ctrl-C to stop)")
+        print(f"Serving {root} at http://127.0.0.1:{port}  (no-store; Ctrl-C to stop)")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
