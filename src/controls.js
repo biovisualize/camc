@@ -35,6 +35,7 @@ function presetState(preset) {
     wireframe: true,
     box: true,
     inset: true,
+    transparent: true,
   };
 }
 
@@ -57,6 +58,7 @@ function stateFromDom() {
     wireframe: $("opt-wire").checked,
     box: $("opt-box").checked,
     inset: $("opt-inset").checked,
+    transparent: $("opt-trans").checked,
   };
 }
 
@@ -81,6 +83,7 @@ function stateToDom(state) {
   $("opt-wire").checked = state.wireframe;
   $("opt-box").checked = state.box;
   $("opt-inset").checked = state.inset;
+  $("opt-trans").checked = state.transparent;
 }
 
 export function createControls({ onChange, onFrame }) {
@@ -109,7 +112,7 @@ export function createControls({ onChange, onFrame }) {
     });
   }
 
-  for (const id of ["opt-wire", "opt-box", "opt-inset"]) {
+  for (const id of ["opt-wire", "opt-box", "opt-inset", "opt-trans"]) {
     $(id).addEventListener("change", () => handleInput());
   }
 
@@ -145,6 +148,7 @@ export function createControls({ onChange, onFrame }) {
     next.wireframe = $("opt-wire").checked;
     next.box = $("opt-box").checked;
     next.inset = $("opt-inset").checked;
+    next.transparent = $("opt-trans").checked;
     stateToDom(next);
     // Read back through the DOM rather than passing `next` straight on, so a preset goes through
     // the same clamping every other change does and cannot smuggle an out-of-range value past it.

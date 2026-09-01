@@ -12,6 +12,9 @@ const BACKGROUND = 0x11151c;
 const SURFACE = 0x7f9fc4;
 const WIRE = 0xe4ecf5;
 const BOX = 0x3a4653;
+// Low enough that a fold behind the outer shell still reads, high enough that the shell itself
+// keeps a recognisable form rather than dissolving into the background.
+const SURFACE_OPACITY = 0.62;
 const INSET_BG = 0x0d1117; // the inset's own background; matches the profile canvases
 
 export class ShapeViewer {
@@ -46,6 +49,10 @@ export class ShapeViewer {
       color: SURFACE,
       roughness: 0.85,
       metalness: 0.0,
+      transparent: true,
+      opacity: SURFACE_OPACITY,
+      // See _setTransparent: blending and depth writing have to move together.
+      depthWrite: false,
       // The CAMC surface is an open sheet that folds through itself, so both faces are visible.
       side: THREE.DoubleSide,
       // Push the fill back in depth so the wireframe drawn at the true surface depth wins the
@@ -151,11 +158,29 @@ export class ShapeViewer {
     this.invalidate();
   }
 
-  setOptions({ wireframe, box, inset } = {}) {
+  setOptions({ wireframe, box, inset, transparent } = {}) {
     if (wireframe !== undefined) this.wire.visible = wireframe;
     if (box !== undefined) this.boxHelper.visible = box;
     if (inset !== undefined) this._insetVisible = inset;
+    if (transparent !== undefined) this._setTransparent(transparent);
     this.invalidate();
+  }
+
+  // A CAMC surface folds through itself, and an opaque one hides every one of those folds behind
+  // its own outer shell. Blending is what makes the interior readable at all.
+  //
+  // depthWrite has to move with it. The surface is a single self-intersecting sheet, so its own
+  // faces arrive in arbitrary depth order; if the nearest one writes depth it rejects the layers
+  // behind it and the result is patchy — some folds blended, some missing — rather than see
+  // through. Leaving depth writing off draws every layer, which is the point of the toggle.
+  _setTransparent(on) {
+    const material = this.surfaceMaterial;
+    if (material.transparent === on) return;
+    material.transparent = on;
+    material.opacity = on ? SURFACE_OPACITY : 1;
+    material.depthWrite = !on;
+    // Turning blending on or off selects a different shader program.
+    material.needsUpdate = true;
   }
 
   // Refit the camera fully: recentre, reset the zoom, and return to the default viewing angle.
